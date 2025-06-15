@@ -20,7 +20,8 @@ class Submission extends Model
         "name",
         "status",
         "notes",
-        "subtype"
+        "subtype",
+        "proof_file"
     ];
 
     public function user(): BelongsTo

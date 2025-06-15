@@ -209,9 +209,8 @@
                         </div>
 
                         <!-- Form untuk Update Status -->
-                        <!-- Form untuk Update Status -->
                         <form action="{{ route('submission.update', $update->id) }}" method="POST"
-                            class="mt-4 space-y-4">
+                            class="mt-4 space-y-4" enctype="multipart/form-data">
                             @csrf
                             @method('PUT')
 
@@ -242,7 +241,6 @@
                                     class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
                             </div>
 
-                            <!-- Input Catatan (Selalu Ditampilkan) -->
                             <!-- Input Catatan -->
                             <div id="notes-field-{{ $update->id }}">
                                 <label for="notes" class="block text-sm font-medium text-gray-700">Catatan</label>
@@ -261,6 +259,19 @@
                                 <!-- Input Hidden untuk Menyimpan Nilai Notes -->
                                 <input type="hidden" id="notes-hidden-{{ $update->id }}" name="notes"
                                     value="{{ $update->status == 'Selesai' ? 'Dokumen telah selesai pada tanggal ' . now()->format('d F Y') : $update->notes }}">
+
+                                <!-- File Upload untuk Status 'Selesai' -->
+                                <div id="file-upload-{{ $update->id }}" class="mt-4 {{ $update->status == 'Selesai' ? '' : 'hidden' }}">
+                                    <label for="proof_file-{{ $update->id }}" class="block text-sm font-medium text-gray-700">Bukti Pengambilan Dokumen</label>
+                                    <input type="file" id="proof_file-{{ $update->id }}" name="proof_file" accept="image/*"
+                                        class="mt-1 block w-full text-sm text-gray-500
+                                        file:mr-4 file:py-2 file:px-4
+                                        file:rounded-md file:border-0
+                                        file:text-sm file:font-semibold
+                                        file:bg-blue-50 file:text-blue-700
+                                        hover:file:bg-blue-100">
+                                    <p class="mt-1 text-sm text-gray-500">Upload foto bukti pengambilan dokumen (JPG, PNG, atau GIF)</p>
+                                </div>
 
                                 <!-- Pilihan Alasan Penolakan -->
                                 <div id="rejection-reasons-{{ $update->id }}"
@@ -301,6 +312,7 @@
         let notesTextarea = document.getElementById(`notes-textarea-${id}`);
         let notesHiddenInput = document.getElementById(`notes-hidden-${id}`);
         let dateInput = document.getElementById(`date-${id}`);
+        let fileUpload = document.getElementById(`file-upload-${id}`);
 
         if (status === 'Ditolak') {
             notesField.classList.remove('hidden');
@@ -310,59 +322,62 @@
             notesTextarea.classList.remove('hidden');
             notesTextarea.disabled = false;
             notesHiddenInput.value = "";
+            fileUpload.classList.add('hidden');
         } else if (status === 'Disetujui') {
-    notesField.classList.remove('hidden');
-    rejectionReasons.classList.add('hidden');
-    dateField.classList.remove('hidden');
-    notesTextarea.disabled = true;
-    notesTextarea.value = "";
-    notesTextarea.placeholder = "Boleh di Kosongkan";
+            notesField.classList.remove('hidden');
+            rejectionReasons.classList.add('hidden');
+            dateField.classList.remove('hidden');
+            notesTextarea.disabled = true;
+            notesTextarea.value = "";
+            notesTextarea.placeholder = "Boleh di Kosongkan";
 
-    if (type === 'KK' || type === 'KTP') {
-        notesText.classList.remove('hidden');
-        notesTextarea.classList.add('hidden');
-        notesTextarea.disabled = true;
-        dateInput.addEventListener('input', function () {
-            updateApprovalText(id, type);
-        });
-    }else {
-        // Selain KK dan KTP
-        notesText.classList.add('hidden');
-        notesTextarea.classList.remove('hidden');
-        notesTextarea.disabled = false;
-        notesHiddenInput.value = notesTextarea.value;
-        dateField.classList.add('hidden'); // Gak perlu tanggal
-         // Update hidden input ketika textarea diubah
-    notesTextarea.addEventListener('input', function() {
-        notesHiddenInput.value = notesTextarea.value;
-    });
-    }
-} else if (status === 'Selesai') {
-    notesField.classList.remove('hidden');
-    rejectionReasons.classList.add('hidden');
-    dateField.classList.add('hidden');
+            if (type === 'KK' || type === 'KTP') {
+                notesText.classList.remove('hidden');
+                notesTextarea.classList.add('hidden');
+                notesTextarea.disabled = true;
+                dateInput.addEventListener('input', function () {
+                    updateApprovalText(id, type);
+                });
+            }else {
+                // Selain KK dan KTP
+                notesText.classList.add('hidden');
+                notesTextarea.classList.remove('hidden');
+                notesTextarea.disabled = false;
+                notesHiddenInput.value = notesTextarea.value;
+                dateField.classList.add('hidden'); // Gak perlu tanggal
+                 // Update hidden input ketika textarea diubah
+            notesTextarea.addEventListener('input', function() {
+                notesHiddenInput.value = notesTextarea.value;
+            });
+            }
+            fileUpload.classList.add('hidden');
+        } else if (status === 'Selesai') {
+            notesField.classList.remove('hidden');
+            rejectionReasons.classList.add('hidden');
+            dateField.classList.add('hidden');
+            fileUpload.classList.remove('hidden');
 
-    // Ubah bagian ini agar textarea ditampilkan untuk input nama pengambil
-    notesText.classList.add('hidden');
-    notesTextarea.classList.remove('hidden');
-    notesTextarea.disabled = false;
+            // Ubah bagian ini agar textarea ditampilkan untuk input nama pengambil
+            notesText.classList.add('hidden');
+            notesTextarea.classList.remove('hidden');
+            notesTextarea.disabled = false;
 
-    // Set placeholder untuk textarea
-    notesTextarea.placeholder = "Masukkan Catatan Untuk Pengaju";
+            // Set placeholder untuk textarea
+            notesTextarea.placeholder = "Masukkan Catatan Untuk Pengaju";
 
-    // Set nilai awal untuk textarea jika belum ada
-    if (!notesTextarea.value || notesTextarea.value.indexOf("Dokumen telah di ambil oleh") === -1) {
-        notesTextarea.value = "Dokumen telah di ambil oleh ";
-    }
+            // Set nilai awal untuk textarea jika belum ada
+            if (!notesTextarea.value || notesTextarea.value.indexOf("Dokumen telah di ambil oleh") === -1) {
+                notesTextarea.value = "Dokumen telah di ambil oleh ";
+            }
 
-    // Update hidden input ketika textarea diubah
-    notesTextarea.addEventListener('input', function() {
-        notesHiddenInput.value = notesTextarea.value;
-    });
+            // Update hidden input ketika textarea diubah
+            notesTextarea.addEventListener('input', function() {
+                notesHiddenInput.value = notesTextarea.value;
+            });
 
-    // Set nilai awal untuk hidden input
-    notesHiddenInput.value = notesTextarea.value;
-} else {
+            // Set nilai awal untuk hidden input
+            notesHiddenInput.value = notesTextarea.value;
+        } else {
             notesField.classList.add('hidden');
             rejectionReasons.classList.add('hidden');
             dateField.classList.add('hidden');
@@ -370,30 +385,31 @@
             notesTextarea.classList.add('hidden');
             notesTextarea.disabled = true;
             notesHiddenInput.value = "";
+            fileUpload.classList.add('hidden');
         }
     }
 
     function updateApprovalText(id, type) {
-    let dateInput = document.getElementById(`date-${id}`);
-    let notesText = document.getElementById(`notes-text-${id}`);
-    let notesHiddenInput = document.getElementById(`notes-hidden-${id}`);
+        let dateInput = document.getElementById(`date-${id}`);
+        let notesText = document.getElementById(`notes-text-${id}`);
+        let notesHiddenInput = document.getElementById(`notes-hidden-${id}`);
 
-    if (dateInput.value) {
-        let selectedDate = new Date(dateInput.value).toLocaleDateString('id-ID', {
-            day: '2-digit',
-            month: 'long',
-            year: 'numeric'
-        });
+        if (dateInput.value) {
+            let selectedDate = new Date(dateInput.value).toLocaleDateString('id-ID', {
+                day: '2-digit',
+                month: 'long',
+                year: 'numeric'
+            });
 
-        if (type === 'KK') {
-            notesText.innerText = `Dokumen dapat diambil pada tanggal ${selectedDate}`;
-            notesHiddenInput.value = `Dokumen dapat diambil pada tanggal ${selectedDate}`;
-        } else if (type === 'KTP') {
-            notesText.innerText = `Silahkan datang di kantor kecamatan pada tanggal ${selectedDate}`;
-            notesHiddenInput.value = `Silahkan datang di kantor kecamatan pada tanggal ${selectedDate}`;
+            if (type === 'KK') {
+                notesText.innerText = `Dokumen dapat diambil pada tanggal ${selectedDate}`;
+                notesHiddenInput.value = `Dokumen dapat diambil pada tanggal ${selectedDate}`;
+            } else if (type === 'KTP') {
+                notesText.innerText = `Silahkan datang di kantor kecamatan pada tanggal ${selectedDate}`;
+                notesHiddenInput.value = `Silahkan datang di kantor kecamatan pada tanggal ${selectedDate}`;
+            }
         }
     }
-}
 
     function setNotes(id, text) {
         let textarea = document.getElementById(`notes-textarea-${id}`);
@@ -537,7 +553,7 @@
                 onclick="openImageModal('{{ asset('storage/' . $value) }}')">
         @else
             <div class="w-16 h-16 rounded-lg border border-gray-300 shadow-sm flex items-center justify-center bg-gray-100 text-gray-500 text-sm" hidden>
-                
+
             </div>
         @endif
 
@@ -549,9 +565,13 @@
         </div>
     </div>
 @endforeach
-
                     @else
                         <p class="text-gray-500 text-center">Tidak ada data yang tersedia.</p>
+                    @endif
+
+                    @if ($info->proof_file)
+                        <p class="text-gray-500 text-center">Berikut Lampirannya</p>
+                        <img src="{{ asset('storage/' . $info->proof_file) }}" alt="Proof" class="w-full h-auto">
                     @endif
                 </div>
 

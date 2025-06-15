@@ -96,11 +96,12 @@ class SubmissionAdminController extends Controller
             'status' => 'required|in:Disetujui,Ditolak,Diproses,Selesai',
             'notes' => 'nullable|string|max:255',
             'date' => 'nullable|date',
+            'proof_file' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048'
         ]);
-        
+
         $submission = Submission::findOrFail($id);
         $submission->status = $request->status;
-        
+
         if ($request->status === 'Ditolak') {
             $submission->notes = $request->notes;
         } elseif ($request->status === 'Disetujui') {
@@ -129,8 +130,12 @@ class SubmissionAdminController extends Controller
                 $submission->notes = "Dokumen dapat diambil di kantor kecamatan";
             }
         } elseif ($request->status === 'Selesai') {
-            // Gunakan input notes dari form untuk semua jenis dokumen
-            if (!empty($request->notes)) {
+
+           if ($request->hasFile('proof_file')) {
+        $file = $request->file('proof_file');
+        $filename = 'proof_' . time() . '_' . $file->getClientOriginalName();
+        $file->storeAs('public/proofs', $filename);
+        $submission->proof_file = 'proofs/' . $filename;
                 $submission->notes = $request->notes;
             } else {
                 $submission->notes = $submission->type === 'KK' ?
@@ -140,9 +145,9 @@ class SubmissionAdminController extends Controller
         } else {
             $submission->notes = null;
         }
-        
+
         $submission->save();
-        
+
         return redirect()->back()->with('success', 'Status berhasil diperbarui.');
     } catch (\Exception $e) {
         return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
